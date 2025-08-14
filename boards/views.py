@@ -14,7 +14,7 @@ from django.urls import reverse
 from django.conf import settings
 
 from .models import Board, Thread, Comment, ThreadFile, CommentFile, Anon, Category
-from .models import get_or_create_anon
+from .models_tools import get_or_create_anon, available_boards
 
 from passcode.models import Passcode
 
@@ -24,9 +24,9 @@ from .tools import remove_exif
 
 from passcode.models import Passcode
 
-from .decorators import BoardPermissionRequiredMixin
+from .decorators import board_permission_required, BoardPermissionRequiredMixin
 
-# Хуёво реализована проверка пасскодов, в интернете DRY-решения не нашёл. Если кто знает - кидайте PR
+# Плохо реализована проверка пасскодов, в интернете DRY-решения не нашёл. Если кто знает - кидайте PR
 
 def handler404(request, _):
     return render(request, 'not_found.html', {error: 'Мы искали по всем углам, но не нашли пост что вам нужен. Может, пост был удалён или вы ввели неправильные данные?'})
@@ -34,18 +34,7 @@ def handler404(request, _):
 def index(request):
     anon = get_or_create_anon(request)
 
-    ac = anon.permissions.all().values_list('id', flat=True)
-
-    def my_func(i):
-        document = i.permissions_required.all().values_list('id', flat=True)
-        return document
-
-    aaa = [i.pk for i in Board.objects.prefetch_related('permissions_required').all() if np.isin(my_func(i), ac).all()]
-    boards = Board.objects.filter(pk__in=aaa)
-
-    fname = request.GET.get('code', None)
-    if fname:
-        boards = boards.filter(code__icontains=fname)
+    boards = available_boards(anon)
 
     code, _ = Passcode.objects.validate(hash_code=request.session.get('passcode'))
     code_entered = 'passcode' in request.session
@@ -75,6 +64,10 @@ class ThreadListView(BoardPermissionRequiredMixin, generic.ListView):
 class ThreadDetailView(BoardPermissionRequiredMixin, generic.DetailView):
     model = Thread
 
+    def get_object(self):
+        return Thread.objects.get(id=self.kwargs['tpk'], board__code=self.kwargs['pk'])
+
+@board_permission_required
 def create_new_thread(request, pk):
     board = get_object_or_404(Board, code=pk)
     if (not board.enable_posting and (request.user.is_anonymous or not request.user.is_staff)) or board.lockdown:
@@ -131,6 +124,7 @@ def create_new_thread(request, pk):
 
         return render(request, 'boards/create_new_thread.html', {'form': form})
 
+@board_permission_required
 def add_comment_to_thread(request, pk, tpk):
     board = get_object_or_404(Board, code=pk)
     if (not board.enable_posting and (request.user.is_anonymous or not request.user.is_staff)) or board.lockdown:

@@ -1,13 +1,13 @@
 import hashlib
 import re
 import statistics
+import numpy as np
 
 from django.core.validators import FileExtensionValidator
 from django.utils.html import escape
 from django.db import models
 
 from passcode.models import Passcode
-from .tools import get_client_ip
 
 class Permission(models.Model):
     code = models.TextField(help_text="Код разрешения.")
@@ -159,19 +159,3 @@ class CommentFile(models.Model):
 
     def type(self):
         return self.file.path.split('.')[-1]
-
-def get_or_create_anon(request):
-    ip = get_client_ip(request)
-
-    try:
-        anon = Anon.objects.get(ip=ip)
-    except Anon.DoesNotExist:
-        if 'ip' in request.session:
-            anon, _ = Anon.objects.get_or_create(ip=request.session['ip'], defaults={'ip': ip, 'banned': False})
-            anon.ip = ip
-            anon.save()
-        else:
-            anon, _ = Anon.objects.get_or_create(ip=ip, defaults={'ip': ip, 'banned': False}) 
-        request.session['ip'] = ip
-
-    return anon
