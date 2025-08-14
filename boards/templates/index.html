@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}<title>schchan - Главная</title>{% endblock %}
+
+{% block body %}
+	<div class="container">
+		<div class="motd-container">
+			<div class="motd">
+				Добро пожаловать на schchan, анонимный имиджборд Днепра.
+				Анонимное общение 24 часа в сутки без рекламы
+			</div>	
+
+			<form class="search-form">
+				<input id="search" name="code" placeholder="Поиск..." type="text"></input>
+				<input type="submit" value="Искать" />
+			</form>
+		</div>
+
+		<div class="boards-container">
+			<h1>Список открытых досок</h1>
+			<div class="boards-list">
+				{% for board in boards %}
+					<div class="board-item">
+						<h3><a href="/boards/board/{{board}}">{{board}} --- {{board.description}}</a> | {% if board.category %}{{board.category}}{% else %}нет категории{% endif %}{%if board.is_nsfw %} | NSFW{% endif %}</h3>
+					</div>
+				{% endfor %}
+			</div>
+		</div>
+	</div>
+
+	{% load static %}
+	<script src="{% static 'js/draggable.js' %}"></script>
+{% endblock %}
