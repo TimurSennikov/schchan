@@ -116,7 +116,7 @@ def create_new_thread(request, pk):
 
             return HttpResponseRedirect(reverse("board", kwargs={"pk": pk}))
         else:
-            return render(request, 'error.html', {'error': 'Неправильно введены данные!'})
+            return render(request, 'boards/create_new_thread.html', {'form': form, 'error': 'Неправильно введены данные (возможно, каптча)'})
     else:
         form = NewThreadForm(initial={"is_nsfw": board.is_nsfw}) if not passcode else NewThreadFormP(initial={"is_nsfw": board.is_nsfw})
         if not board.is_nsfw:
@@ -175,9 +175,9 @@ def add_comment_to_thread(request, pk, tpk):
                 data = {'thread': thread.id, 'thread_title': thread.title, 'board': board.code, 'is_nsfw': nc.is_nsfw, 'id': nc.id, 'text': nc.text, 'files': furls}
                 ans = requests.post(settings.MKBOT_ADDR + "/newcomment", data=json.dumps(data))
 
-            return HttpResponseRedirect(reverse("thread_detail_view", kwargs={"bpk": pk, "pk": tpk}))
+            return HttpResponseRedirect(reverse("thread_detail_view", kwargs={"pk": pk, "tpk": tpk}))
         else:
-            return render(request, 'error.html', {'error': "Неправильно введена капча!"})
+            return render(request, 'boards/create_new_thread.html', {'form': form, 'error': 'Неправильно введены данные (возможно, каптча)'})
     else:
         nsw = thread.is_nsfw
 

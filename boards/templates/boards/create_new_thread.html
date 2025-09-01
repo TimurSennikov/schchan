@@ -6,6 +6,9 @@
 	<div class="container">
 		<div class="thread">
 			<h2>Начать новый тред</h2>
+			{% if error %}
+				<h3>{{error}}</h3>
+			{% endif %}
 			<form enctype="multipart/form-data" action="" method="post">
 				{% csrf_token %}
 				<table>
